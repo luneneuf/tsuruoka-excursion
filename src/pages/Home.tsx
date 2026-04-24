@@ -1,45 +1,28 @@
 import { useCallback } from 'react'
 import tripData from '../data/tripData'
 import { useWeather } from '../hooks/useWeather'
-import Toast, { useToast } from '../components/Toast'
 import type { Event } from '../data/tripData'
 
 function getCurrentEvent(): { current: Event | null; next: Event | null; dayIdx: number } {
   const now = new Date()
   const nowDate = now.toISOString().slice(0, 10)
   const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-
   const start = tripData.meta.startDate
   const end = tripData.meta.endDate
 
-  // Before or after trip: show day 1
   if (nowDate < start || nowDate > end) {
     const events = tripData.days[0].events
     return { current: events[0], next: events[1] ?? null, dayIdx: 0 }
   }
 
-  const dayData = tripData.days.find(d => d.date === nowDate)
-  if (!dayData) return { current: tripData.days[0].events[0], next: null, dayIdx: 0 }
-
   const dayIdx = tripData.days.findIndex(d => d.date === nowDate)
-  const events = dayData.events
-  let currentIdx = events.findLastIndex(e => e.time <= nowTime)
-  if (currentIdx < 0) currentIdx = 0
+  if (dayIdx < 0) return { current: tripData.days[0].events[0], next: null, dayIdx: 0 }
 
-  return {
-    current: events[currentIdx] ?? null,
-    next: events[currentIdx + 1] ?? null,
-    dayIdx,
-  }
-}
+  const events = tripData.days[dayIdx].events
+  let idx = events.findLastIndex(e => e.time <= nowTime)
+  if (idx < 0) idx = 0
 
-function copy(text: string, showToast: (msg: string) => void) {
-  navigator.clipboard.writeText(text).then(() => showToast('복사됨 ✓'))
-}
-
-interface HomeProps {
-  onGoTimeline: (dayIdx: number) => void
-  onGoBookings: () => void
+  return { current: events[idx] ?? null, next: events[idx + 1] ?? null, dayIdx }
 }
 
 const TYPE_ICON: Record<Event['type'], string> = {
@@ -50,297 +33,251 @@ const TYPE_ICON: Record<Event['type'], string> = {
   accommodation: 'hotel',
 }
 
-export default function Home({ onGoTimeline, onGoBookings }: HomeProps) {
-  const { weather, loading, weatherLabel, weatherIcon, fallbackText } = useWeather()
-  const { toastMessage, toastVisible, showToast, hideToast } = useToast()
+interface HomeProps {
+  onGoTimeline: (dayIdx: number) => void
+}
+
+export default function Home({ onGoTimeline }: HomeProps) {
+  const { today, tomorrow, source, loading, fallbackText } = useWeather()
   const { current, next, dayIdx } = getCurrentEvent()
   const acc = tripData.accommodation
 
-  const handleCopyRef = useCallback(() => {
-    copy(acc.bookingRef, showToast)
-  }, [acc.bookingRef, showToast])
+  const handleScheduleTap = useCallback(() => {
+    onGoTimeline(dayIdx)
+  }, [onGoTimeline, dayIdx])
 
   return (
-    <div style={{ padding: '0 16px 100px', overflowY: 'auto', flex: 1 }}>
-      {/* Header */}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      {/* ① 히어로 이미지 */}
       <div
         style={{
-          padding: '20px 0 16px',
-          borderBottom: '1px solid var(--color-outline-variant)',
-          marginBottom: '16px',
+          flex: '1 1 0',
+          minHeight: 0,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <h1
-          style={{
-            fontFamily: 'var(--font-headline)',
-            fontSize: '22px',
-            fontWeight: 600,
-            color: 'var(--color-on-surface)',
-            margin: 0,
-            lineHeight: 1.2,
-          }}
-        >
-          Tsuruoka Excursion
-        </h1>
-        <p
-          style={{
-            fontSize: '13px',
-            color: 'var(--color-on-surface-variant)',
-            margin: '4px 0 0',
-          }}
-        >
-          쓰루오카·사카타 · 2026.08.06~08.09 · 2명
-        </p>
-      </div>
-
-      {/* Weather card */}
-      <div
-        style={{
-          background: 'var(--color-primary-fixed)',
-          borderRadius: 'var(--radius-2xl)',
-          padding: '16px',
-          marginBottom: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '14px',
-        }}
-      >
-        <span
-          className="material-symbols-outlined fill"
-          style={{ fontSize: '36px', color: 'var(--color-primary-container)' }}
-        >
-          {loading ? 'cloud' : weatherIcon}
-        </span>
-        <div style={{ flex: 1 }}>
-          <p
+        {acc.heroImage ? (
+          <img
+            src={acc.heroImage}
+            alt="스이덴 테라스"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div
             style={{
-              fontSize: '12px',
-              color: 'var(--color-primary-container)',
-              margin: 0,
-              fontWeight: 500,
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(160deg, var(--color-primary-fixed) 0%, var(--color-primary) 100%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
             }}
           >
-            쓰루오카 날씨
-          </p>
-          {loading ? (
-            <p style={{ fontSize: '14px', color: 'var(--color-primary-container)', margin: '2px 0 0' }}>
-              로딩 중…
-            </p>
-          ) : weather ? (
+            <span
+              className="material-symbols-outlined fill"
+              style={{ fontSize: '48px', color: 'var(--color-on-primary)', opacity: 0.7 }}
+            >
+              holiday_village
+            </span>
             <p
               style={{
-                fontSize: '18px',
-                fontWeight: 700,
-                color: 'var(--color-primary-container)',
-                margin: '2px 0 0',
+                fontFamily: 'var(--font-headline)',
+                fontSize: '16px',
+                color: 'var(--color-on-primary)',
+                opacity: 0.85,
+                margin: 0,
               }}
             >
-              {weather.temperature}°C &nbsp;
-              <span style={{ fontSize: '14px', fontWeight: 400 }}>{weatherLabel}</span>
-              {weather.source === 'fallback' && (
-                <span style={{ fontSize: '11px', marginLeft: '6px', opacity: 0.7 }}>(오프라인)</span>
-              )}
+              쇼나이 호텔 스이덴 테라스
             </p>
-          ) : (
-            <p style={{ fontSize: '13px', color: 'var(--color-primary-container)', margin: '2px 0 0' }}>
-              {fallbackText}
+            <p style={{ fontSize: '11px', color: 'var(--color-on-primary)', opacity: 0.6, margin: 0 }}>
+              8/6(목) 체크인 · 3박
             </p>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* Current schedule highlight */}
-      {current && (
+        {/* 앱 제목 오버레이 */}
         <div
           style={{
-            background: 'var(--color-surface-container-lowest)',
-            borderRadius: 'var(--radius-2xl)',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
             padding: '16px',
-            marginBottom: '12px',
-            boxShadow: 'var(--shadow-card)',
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent',
+            background: 'linear-gradient(to bottom, rgba(27,29,14,0.45) 0%, transparent 100%)',
           }}
-          onClick={() => onGoTimeline(dayIdx)}
         >
-          <p
-            style={{
-              fontSize: '11px',
-              color: 'var(--color-primary)',
-              fontWeight: 600,
-              margin: '0 0 8px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-          >
-            현재 일정
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--color-primary-fixed)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--color-primary)' }}>
-                {TYPE_ICON[current.type]}
-              </span>
-            </div>
-            <div>
-              <p
-                style={{
-                  fontFamily: 'var(--font-headline)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-on-surface)',
-                  margin: 0,
-                }}
-              >
-                {current.title}
-              </p>
-              <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', margin: '2px 0 0' }}>
-                DAY {dayIdx + 1} · {current.time}
-              </p>
-            </div>
-            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-outline)', marginLeft: 'auto' }}>
-              chevron_right
-            </span>
-          </div>
-
-          {next && (
-            <>
-              <div style={{ height: '1px', background: 'var(--color-outline-variant)', margin: '12px 0', opacity: 0.5 }} />
-              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', margin: '0 0 6px', fontWeight: 500 }}>
-                다음 일정
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-on-surface-variant)' }}>
-                  {TYPE_ICON[next.type]}
-                </span>
-                <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', margin: 0 }}>
-                  {next.time} · {next.title}
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Accommodation card */}
-      <div
-        style={{
-          background: 'var(--color-surface-container-lowest)',
-          borderRadius: 'var(--radius-2xl)',
-          padding: '16px',
-          boxShadow: 'var(--shadow-card)',
-          cursor: 'pointer',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-        onClick={onGoBookings}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--color-primary)' }}>hotel</span>
           <p
             style={{
               fontFamily: 'var(--font-headline)',
-              fontSize: '15px',
+              fontSize: '18px',
               fontWeight: 600,
-              color: 'var(--color-on-surface)',
+              color: '#ffffff',
               margin: 0,
+              textShadow: '0 1px 4px rgba(0,0,0,0.3)',
             }}
           >
-            {acc.name}
+            Tsuruoka Excursion
           </p>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-outline)', marginLeft: 'auto' }}>
-            chevron_right
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            flexWrap: 'wrap',
-            marginBottom: '12px',
-          }}
-        >
-          {[
-            { icon: 'login', label: '체크인', value: '8/6(목)' },
-            { icon: 'logout', label: '체크아웃', value: '8/9(일)' },
-            { icon: 'bed', label: '기간', value: `${acc.nights}박` },
-          ].map(item => (
-            <div
-              key={item.label}
-              style={{
-                background: 'var(--color-surface-container)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '6px 10px',
-                flex: 1,
-                minWidth: '80px',
-              }}
-            >
-              <p style={{ fontSize: '10px', color: 'var(--color-on-surface-variant)', margin: 0 }}>{item.label}</p>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-on-surface)', margin: '1px 0 0' }}>
-                {item.value}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Booking ref copy */}
-        <div
-          onClick={e => { e.stopPropagation(); handleCopyRef() }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'var(--color-surface-container)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '10px 12px',
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <div>
-            <p style={{ fontSize: '10px', color: 'var(--color-on-surface-variant)', margin: 0 }}>
-              {acc.bookingService} 일정번호
-            </p>
-            <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-on-surface)', margin: '2px 0 0', letterSpacing: '0.5px' }}>
-              {acc.bookingRef}
-            </p>
-          </div>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-primary)' }}>
-            content_copy
-          </span>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)', margin: '2px 0 0', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+            쓰루오카·사카타 · 2026.08.06~08.09
+          </p>
         </div>
       </div>
 
-      {/* Tips */}
+      {/* ② 날씨 */}
       <div
         style={{
-          background: 'var(--color-surface-container-low)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '12px 14px',
-          marginTop: '12px',
-          display: 'flex',
-          gap: '10px',
+          flexShrink: 0,
+          background: 'var(--color-surface-container)',
+          borderTop: '1px solid var(--color-outline-variant)',
+          padding: '12px 16px',
         }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-secondary)', flexShrink: 0, marginTop: '1px' }}>
-          payments
-        </span>
-        <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', margin: 0, lineHeight: 1.6 }}>
-          {tripData.tips.payment}
-        </p>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '52px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--color-neutral)', animation: 'spin 1s linear infinite' }}>
+              refresh
+            </span>
+            <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', margin: 0 }}>날씨 로딩 중…</p>
+          </div>
+        ) : source === 'fallback' || (!today && !tomorrow) ? (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-tertiary)', flexShrink: 0, marginTop: '1px' }}>wb_sunny</span>
+            <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', margin: 0, lineHeight: 1.6 }}>
+              {fallbackText}
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {[today, tomorrow].filter(Boolean).map(day => (
+              <div
+                key={day!.label}
+                style={{
+                  flex: 1,
+                  background: 'var(--color-surface-container-lowest)',
+                  borderRadius: 'var(--radius-xl)',
+                  padding: '10px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <span
+                  className="material-symbols-outlined fill"
+                  style={{ fontSize: '28px', color: 'var(--color-tertiary)', flexShrink: 0 }}
+                >
+                  {day!.icon}
+                </span>
+                <div>
+                  <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', margin: 0, fontWeight: 500 }}>
+                    {day!.label}
+                  </p>
+                  <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-on-surface)', margin: '1px 0 0', lineHeight: 1 }}>
+                    {day!.tempMax}° <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--color-neutral)' }}>{day!.tempMin}°</span>
+                  </p>
+                  <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', margin: '2px 0 0' }}>
+                    {day!.condition}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <Toast message={toastMessage} visible={toastVisible} onHide={hideToast} />
+      {/* ③ 다음 일정 */}
+      <div
+        style={{
+          flexShrink: 0,
+          padding: '12px 16px',
+          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          background: 'var(--color-surface-container-lowest)',
+          borderTop: '1px solid var(--color-outline-variant)',
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        onClick={handleScheduleTap}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            현재 일정 · DAY {dayIdx + 1}
+          </p>
+          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-outline)' }}>chevron_right</span>
+        </div>
+
+        {current ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <EventRow event={current} highlight />
+            {next && <EventRow event={next} />}
+          </div>
+        ) : (
+          <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', margin: 0 }}>일정 없음</p>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+      `}</style>
+    </div>
+  )
+}
+
+function EventRow({ event, highlight }: { event: Event; highlight?: boolean }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        opacity: highlight ? 1 : 0.65,
+      }}
+    >
+      <div
+        style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: 'var(--radius-lg)',
+          background: highlight ? 'var(--color-primary-fixed)' : 'var(--color-surface-container)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-primary)' }}>
+          {TYPE_ICON[event.type]}
+        </span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p
+          style={{
+            fontFamily: 'var(--font-headline)',
+            fontSize: highlight ? '14px' : '13px',
+            fontWeight: highlight ? 600 : 400,
+            color: 'var(--color-on-surface)',
+            margin: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {event.title}
+        </p>
+        <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', margin: '1px 0 0' }}>
+          {event.time}{event.cost ? ` · ${event.cost}` : ''}
+        </p>
+      </div>
     </div>
   )
 }

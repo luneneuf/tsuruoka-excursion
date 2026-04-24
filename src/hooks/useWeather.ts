@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react'
 import tripData from '../data/tripData'
 
-export interface WeatherData {
-  temperature: number
+export interface DayWeather {
+  date: string
+  label: string        // "오늘" | "내일"
+  tempMin: number
+  tempMax: number
   weatherCode: number
-  isDay: number
+  icon: string
+  condition: string
+}
+
+export interface WeatherState {
+  today: DayWeather | null
+  tomorrow: DayWeather | null
   source: 'api' | 'cache' | 'fallback'
 }
 
-const CACHE_KEY = 'tsuruoka_weather'
-const CACHE_TTL = 6 * 60 * 60 * 1000 // 6 hours
+const CACHE_KEY = 'tsuruoka_weather_v2'
+const CACHE_TTL = 60 * 60 * 1000 // 1시간
 
-function weatherLabel(code: number): string {
+function conditionLabel(code: number): string {
   if (code === 0) return '맑음'
   if (code <= 3) return '구름 조금'
   if (code <= 49) return '안개'
@@ -21,9 +30,9 @@ function weatherLabel(code: number): string {
   return '뇌우'
 }
 
-function weatherIcon(code: number, isDay: number): string {
-  if (code === 0) return isDay ? 'sunny' : 'clear_night'
-  if (code <= 3) return isDay ? 'partly_cloudy_day' : 'partly_cloudy_night'
+function weatherIcon(code: number): string {
+  if (code === 0) return 'sunny'
+  if (code <= 3) return 'partly_cloudy_day'
   if (code <= 49) return 'foggy'
   if (code <= 67) return 'rainy'
   if (code <= 77) return 'ac_unit'
@@ -32,66 +41,81 @@ function weatherIcon(code: number, isDay: number): string {
 }
 
 interface CachedWeather {
-  data: WeatherData
+  data: WeatherState
   timestamp: number
 }
 
 export function useWeather() {
-  const [weather, setWeather] = useState<WeatherData | null>(null)
+  const [state, setState] = useState<WeatherState>({ today: null, tomorrow: null, source: 'fallback' })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchWeather() {
-      // Try cache first
+    async function fetch() {
+      // Try cache
       try {
-        const cached = localStorage.getItem(CACHE_KEY)
-        if (cached) {
-          const parsed: CachedWeather = JSON.parse(cached)
-          if (Date.now() - parsed.timestamp < CACHE_TTL) {
-            setWeather({ ...parsed.data, source: 'cache' })
+        const raw = localStorage.getItem(CACHE_KEY)
+        if (raw) {
+          const cached: CachedWeather = JSON.parse(raw)
+          if (Date.now() - cached.timestamp < CACHE_TTL) {
+            setState({ ...cached.data, source: 'cache' })
             setLoading(false)
             return
           }
         }
       } catch {}
 
-      // Try API
       if (!navigator.onLine) {
-        setWeather({ temperature: 28, weatherCode: 2, isDay: 1, source: 'fallback' })
+        setState(makeFallback())
         setLoading(false)
         return
       }
 
       try {
         const url =
-          'https://api.open-meteo.com/v1/forecast?latitude=38.73&longitude=139.82&current_weather=true&timezone=Asia/Tokyo'
-        const res = await fetch(url)
-        if (!res.ok) throw new Error('API error')
+          'https://api.open-meteo.com/v1/forecast' +
+          '?latitude=38.73&longitude=139.82' +
+          '&daily=weathercode,temperature_2m_max,temperature_2m_min' +
+          '&timezone=Asia%2FTokyo' +
+          '&forecast_days=2'
+        const res = await globalThis.fetch(url)
+        if (!res.ok) throw new Error('api error')
         const json = await res.json()
-        const cw = json.current_weather
-        const data: WeatherData = {
-          temperature: Math.round(cw.temperature),
-          weatherCode: cw.weathercode,
-          isDay: cw.is_day,
+        const d = json.daily
+
+        const makeDay = (idx: number, label: string): DayWeather => ({
+          date: d.time[idx],
+          label,
+          tempMin: Math.round(d.temperature_2m_min[idx]),
+          tempMax: Math.round(d.temperature_2m_max[idx]),
+          weatherCode: d.weathercode[idx],
+          icon: weatherIcon(d.weathercode[idx]),
+          condition: conditionLabel(d.weathercode[idx]),
+        })
+
+        const data: WeatherState = {
+          today: makeDay(0, '오늘'),
+          tomorrow: makeDay(1, '내일'),
           source: 'api',
         }
-        setWeather(data)
+        setState(data)
         localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }))
       } catch {
-        setWeather({ temperature: 28, weatherCode: 2, isDay: 1, source: 'fallback' })
+        setState(makeFallback())
       } finally {
         setLoading(false)
       }
     }
 
-    fetchWeather()
+    fetch()
   }, [])
 
+  return { ...state, loading, fallbackText: tripData.tips.weather }
+}
+
+function makeFallback(): WeatherState {
   return {
-    weather,
-    loading,
-    weatherLabel: weather ? weatherLabel(weather.weatherCode) : '',
-    weatherIcon: weather ? weatherIcon(weather.weatherCode, weather.isDay) : 'wb_sunny',
-    fallbackText: tripData.tips.weather,
+    today: null,
+    tomorrow: null,
+    source: 'fallback',
   }
 }

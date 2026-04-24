@@ -67,10 +67,6 @@ export default function App() {
     setActiveTab(1)
   }, [])
 
-  const handleGoBookings = useCallback(() => {
-    setActiveTab(2)
-  }, [])
-
   return (
     <div
       style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden' }}
@@ -103,7 +99,7 @@ export default function App() {
 
       {/* Page content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', marginTop: offlineBanner ? '30px' : 0 }}>
-        {activeTab === 0 && <Home onGoTimeline={handleGoTimeline} onGoBookings={handleGoBookings} />}
+        {activeTab === 0 && <Home onGoTimeline={handleGoTimeline} />}
         {activeTab === 1 && <Timeline initialDay={timelineDay} />}
         {activeTab === 2 && <Bookings />}
         {activeTab === 3 && <Transport />}

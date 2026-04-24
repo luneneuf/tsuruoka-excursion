@@ -15,7 +15,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'weather-cache',
-              expiration: { maxAgeSeconds: 60 * 60 * 6 },
+              expiration: { maxAgeSeconds: 60 * 60 * 1 },
             },
           },
           {

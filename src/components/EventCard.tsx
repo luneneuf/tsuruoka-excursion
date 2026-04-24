@@ -16,6 +16,14 @@ const TYPE_BG: Record<Event['type'], string> = {
   accommodation: 'var(--color-guide-accommodation)',
 }
 
+function openMap(mapQuery: string) {
+  window.open(
+    'https://maps.google.com/?q=' + encodeURIComponent(mapQuery),
+    '_blank',
+    'noopener',
+  )
+}
+
 interface EventCardProps {
   event: Event
   onTap?: (event: Event) => void
@@ -23,50 +31,41 @@ interface EventCardProps {
 
 export default function EventCard({ event, onTap }: EventCardProps) {
   const hasGuide = !!event.guide
+  const hasMap = !!event.mapQuery
   const hasAlert = !!event.alert
-  const isClickable = hasGuide
 
+  // Tap behavior:
+  // - guide 있음 → 바텀시트 (mapQuery는 별도 아이콘 버튼)
+  // - guide 없고 mapQuery 있음 → 지도 열기
+  // - 둘 다 없음 → 반응 없음
+  const isClickable = hasGuide || hasMap
   const cardBg = hasGuide ? TYPE_BG[event.type] : 'var(--color-surface-container-lowest)'
 
-  const handleClick = () => {
-    if (isClickable && onTap) onTap(event)
+  const handleCardClick = () => {
+    if (hasGuide) {
+      onTap?.(event)
+    } else if (hasMap) {
+      openMap(event.mapQuery!)
+    }
+  }
+
+  const handleMapClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+    if (event.mapQuery) openMap(event.mapQuery)
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '12px',
-        alignItems: 'flex-start',
-      }}
-    >
-      {/* Timeline line + time */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          width: '44px',
-          flexShrink: 0,
-          paddingTop: '4px',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            color: 'var(--color-on-surface-variant)',
-            letterSpacing: '0.3px',
-            lineHeight: 1,
-          }}
-        >
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      {/* 시간 */}
+      <div style={{ width: '44px', flexShrink: 0, paddingTop: '4px' }}>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-on-surface-variant)', letterSpacing: '0.3px' }}>
           {event.time}
         </span>
       </div>
 
-      {/* Card */}
+      {/* 카드 */}
       <div
-        onClick={handleClick}
+        onClick={handleCardClick}
         style={{
           flex: 1,
           background: cardBg,
@@ -84,11 +83,10 @@ export default function EventCard({ event, onTap }: EventCardProps) {
         onPointerLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = '' }}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
-        aria-label={isClickable ? `${event.title} — 상세 보기` : undefined}
-        onKeyDown={e => { if (isClickable && (e.key === 'Enter' || e.key === ' ')) handleClick() }}
+        onKeyDown={e => { if (isClickable && (e.key === 'Enter' || e.key === ' ')) handleCardClick() }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-          {/* Icon */}
+          {/* 타입 아이콘 */}
           <div
             style={{
               width: '32px',
@@ -101,79 +99,75 @@ export default function EventCard({ event, onTap }: EventCardProps) {
               flexShrink: 0,
             }}
           >
-            <span
-              className="material-symbols-outlined"
-              style={{
-                fontSize: '18px',
-                color: 'var(--color-primary)',
-              }}
-            >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-primary)' }}>
               {TYPE_ICON[event.type]}
             </span>
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Title row */}
+            {/* 제목 + 액션 아이콘 */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-headline)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--color-on-surface)',
-                    margin: 0,
-                    lineHeight: 1.3,
-                  }}
-                >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'var(--color-on-surface)',
+                  margin: 0,
+                  lineHeight: 1.3,
+                }}>
                   {event.title}
                 </p>
-                <p
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--color-on-surface-variant)',
-                    margin: '1px 0 0',
-                  }}
-                >
+                <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', margin: '1px 0 0' }}>
                   {event.titleJa}
                 </p>
               </div>
-              {hasGuide && (
-                <span
-                  className="material-symbols-outlined"
-                  style={{
-                    fontSize: '16px',
-                    color: 'var(--color-primary)',
-                    marginLeft: '6px',
-                    flexShrink: 0,
-                  }}
-                >
-                  info
-                </span>
-              )}
+
+              {/* 아이콘 버튼 영역 */}
+              <div style={{ display: 'flex', gap: '4px', marginLeft: '6px', flexShrink: 0 }}>
+                {/* guide 있으면 info 아이콘 */}
+                {hasGuide && (
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-primary)' }}>
+                    info
+                  </span>
+                )}
+                {/* guide + mapQuery 둘 다 있으면 지도 아이콘 별도 버튼 */}
+                {hasGuide && hasMap && (
+                  <span
+                    className="material-symbols-outlined"
+                    onClick={handleMapClick}
+                    style={{
+                      fontSize: '16px',
+                      color: 'var(--color-tertiary)',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      borderRadius: '4px',
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="지도 열기"
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleMapClick(e as unknown as React.MouseEvent) }}
+                  >
+                    map
+                  </span>
+                )}
+                {/* guide 없고 mapQuery만 있으면 지도 아이콘 (카드 탭과 동일 동작) */}
+                {!hasGuide && hasMap && (
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-tertiary)' }}>
+                    map
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Description */}
-            <p
-              style={{
-                fontSize: '12px',
-                color: 'var(--color-on-surface-variant)',
-                margin: '6px 0 0',
-                lineHeight: 1.5,
-              }}
-            >
+            {/* 설명 */}
+            <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', margin: '6px 0 0', lineHeight: 1.5 }}>
               {event.description}
             </p>
 
-            {/* Cost / Duration row */}
+            {/* 비용 / 소요 시간 */}
             {(event.cost || event.duration) && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '12px',
-                  marginTop: '6px',
-                }}
-              >
+              <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
                 {event.cost && (
                   <span style={{ fontSize: '12px', color: 'var(--color-secondary)', fontWeight: 600 }}>
                     {event.cost}
@@ -189,33 +183,21 @@ export default function EventCard({ event, onTap }: EventCardProps) {
           </div>
         </div>
 
-        {/* Alert */}
+        {/* 경고 */}
         {hasAlert && (
-          <div
-            style={{
-              marginTop: '10px',
-              padding: '8px 10px',
-              background: 'var(--color-error-container)',
-              borderRadius: 'var(--radius-lg)',
-              display: 'flex',
-              gap: '6px',
-              alignItems: 'flex-start',
-            }}
-          >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '14px', color: 'var(--color-error)', flexShrink: 0, marginTop: '1px' }}
-            >
+          <div style={{
+            marginTop: '10px',
+            padding: '8px 10px',
+            background: 'var(--color-error-container)',
+            borderRadius: 'var(--radius-lg)',
+            display: 'flex',
+            gap: '6px',
+            alignItems: 'flex-start',
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--color-error)', flexShrink: 0, marginTop: '1px' }}>
               warning
             </span>
-            <p
-              style={{
-                fontSize: '12px',
-                color: 'var(--color-error)',
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
+            <p style={{ fontSize: '12px', color: 'var(--color-error)', margin: 0, lineHeight: 1.5 }}>
               {event.alert}
             </p>
           </div>
