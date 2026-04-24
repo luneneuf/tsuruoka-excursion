@@ -58,7 +58,7 @@ export default function Home({ onGoTimeline }: HomeProps) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* ① 히어로 이미지 — 크로스페이드 슬라이드쇼 */}
-      <div style={{ flex: '1 1 0', minHeight: 0, position: 'relative', overflow: 'hidden', background: '#1b1d0e' }}>
+      <div style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e' }}>
         {HERO_IMAGES.map((src, i) => (
           <img
             key={src}
@@ -185,7 +185,7 @@ export default function Home({ onGoTimeline }: HomeProps) {
       {/* ③ 다음 일정 */}
       <div
         style={{
-          flexShrink: 0,
+          flex: 1,
           padding: '12px 16px',
           paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
           background: 'var(--color-surface-container-lowest)',
