@@ -1,7 +1,10 @@
-import { useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import tripData from '../data/tripData'
 import { useWeather } from '../hooks/useWeather'
 import type { Event } from '../data/tripData'
+
+const HERO_IMAGES = ['/hero1.jpg', '/hero2.jpg', '/hero3.jpg']
+const HERO_INTERVAL = 5000
 
 function getCurrentEvent(): { current: Event | null; next: Event | null; dayIdx: number } {
   const now = new Date()
@@ -40,73 +43,41 @@ interface HomeProps {
 export default function Home({ onGoTimeline }: HomeProps) {
   const { today, tomorrow, source, loading, fallbackText } = useWeather()
   const { current, next, dayIdx } = getCurrentEvent()
-  const acc = tripData.accommodation
+  const [heroIdx, setHeroIdx] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setHeroIdx(i => (i + 1) % HERO_IMAGES.length), HERO_INTERVAL)
+    return () => clearInterval(id)
+  }, [])
 
   const handleScheduleTap = useCallback(() => {
     onGoTimeline(dayIdx)
   }, [onGoTimeline, dayIdx])
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      {/* ① 히어로 이미지 */}
-      <div
-        style={{
-          flex: '1 1 0',
-          minHeight: 0,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {acc.heroImage ? (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+
+      {/* ① 히어로 이미지 — 크로스페이드 슬라이드쇼 */}
+      <div style={{ flex: '1 1 0', minHeight: 0, position: 'relative', overflow: 'hidden', background: '#1b1d0e' }}>
+        {HERO_IMAGES.map((src, i) => (
           <img
-            src={acc.heroImage}
-            alt="스이덴 테라스"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <div
+            key={src}
+            src={src}
+            alt=""
             style={{
+              position: 'absolute',
+              inset: 0,
               width: '100%',
               height: '100%',
-              background: 'linear-gradient(160deg, var(--color-primary-fixed) 0%, var(--color-primary) 100%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
+              objectFit: 'cover',
+              opacity: i === heroIdx ? 1 : 0,
+              transition: 'opacity 0.9s ease',
+              pointerEvents: 'none',
             }}
-          >
-            <span
-              className="material-symbols-outlined fill"
-              style={{ fontSize: '48px', color: 'var(--color-on-primary)', opacity: 0.7 }}
-            >
-              holiday_village
-            </span>
-            <p
-              style={{
-                fontFamily: 'var(--font-headline)',
-                fontSize: '16px',
-                color: 'var(--color-on-primary)',
-                opacity: 0.85,
-                margin: 0,
-              }}
-            >
-              쇼나이 호텔 스이덴 테라스
-            </p>
-            <p style={{ fontSize: '11px', color: 'var(--color-on-primary)', opacity: 0.6, margin: 0 }}>
-              8/6(목) 체크인 · 3박
-            </p>
-          </div>
-        )}
+          />
+        ))}
 
-        {/* 앱 제목 오버레이 */}
+        {/* 상단 제목 오버레이 */}
         <div
           style={{
             position: 'absolute',
@@ -114,24 +85,42 @@ export default function Home({ onGoTimeline }: HomeProps) {
             left: 0,
             right: 0,
             padding: '16px',
-            background: 'linear-gradient(to bottom, rgba(27,29,14,0.45) 0%, transparent 100%)',
+            background: 'linear-gradient(to bottom, rgba(27,29,14,0.5) 0%, transparent 100%)',
           }}
         >
-          <p
-            style={{
-              fontFamily: 'var(--font-headline)',
-              fontSize: '18px',
-              fontWeight: 600,
-              color: '#ffffff',
-              margin: 0,
-              textShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            }}
-          >
+          <p style={{ fontFamily: 'var(--font-headline)', fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
             Tsuruoka Excursion
           </p>
           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)', margin: '2px 0 0', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
             쓰루오카·사카타 · 2026.08.06~08.09
           </p>
+        </div>
+
+        {/* 하단 도트 인디케이터 */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '14px',
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '6px',
+          }}
+        >
+          {HERO_IMAGES.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                height: '5px',
+                width: i === heroIdx ? '18px' : '5px',
+                borderRadius: '3px',
+                background: 'rgba(255,255,255,0.9)',
+                opacity: i === heroIdx ? 1 : 0.45,
+                transition: 'width 0.4s ease, opacity 0.4s ease',
+              }}
+            />
+          ))}
         </div>
       </div>
 
@@ -173,10 +162,7 @@ export default function Home({ onGoTimeline }: HomeProps) {
                   gap: '10px',
                 }}
               >
-                <span
-                  className="material-symbols-outlined fill"
-                  style={{ fontSize: '28px', color: 'var(--color-tertiary)', flexShrink: 0 }}
-                >
+                <span className="material-symbols-outlined fill" style={{ fontSize: '28px', color: 'var(--color-tertiary)', flexShrink: 0 }}>
                   {day!.icon}
                 </span>
                 <div>
@@ -235,14 +221,7 @@ export default function Home({ onGoTimeline }: HomeProps) {
 
 function EventRow({ event, highlight }: { event: Event; highlight?: boolean }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        opacity: highlight ? 1 : 0.65,
-      }}
-    >
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: highlight ? 1 : 0.65 }}>
       <div
         style={{
           width: '32px',
