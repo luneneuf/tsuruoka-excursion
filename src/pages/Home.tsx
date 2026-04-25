@@ -167,7 +167,7 @@ export default function Home({ onGoTimeline }: HomeProps) {
                 </span>
                 <div>
                   <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', margin: 0, fontWeight: 500 }}>
-                    {day!.label}
+                    {day!.label} · {day!.date.slice(5).replace('-', '/')}
                   </p>
                   <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-on-surface)', margin: '1px 0 0', lineHeight: 1 }}>
                     {day!.tempMax}° <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--color-neutral)' }}>{day!.tempMin}°</span>
@@ -182,36 +182,56 @@ export default function Home({ onGoTimeline }: HomeProps) {
         )}
       </div>
 
-      {/* ③ 다음 일정 */}
+      {/* ③ 다음 일정 — 헤더 고정 + 이벤트 목록 스크롤 */}
       <div
         style={{
           flex: 1,
-          padding: '12px 16px',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
           background: 'var(--color-surface-container-lowest)',
           borderTop: '1px solid var(--color-outline-variant)',
-          cursor: 'pointer',
-          WebkitTapHighlightColor: 'transparent',
         }}
-        onClick={handleScheduleTap}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        {/* 섹션 헤더 — 고정 */}
+        <div
+          style={{
+            flexShrink: 0,
+            padding: '12px 16px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+          onClick={handleScheduleTap}
+        >
           <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             현재 일정 · DAY {dayIdx + 1}
           </p>
           <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-outline)' }}>chevron_right</span>
         </div>
 
-        {current ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <EventRow event={current} highlight />
-            {upcoming.map((ev, i) => (
-              <EventRow key={ev.time + ev.title} event={ev} opacity={i === 0 ? 0.65 : 0.4} />
-            ))}
-          </div>
-        ) : (
-          <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', margin: 0 }}>일정 없음</p>
-        )}
+        {/* 이벤트 목록 — 스크롤 */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '0 16px',
+            paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          }}
+        >
+          {current ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <EventRow event={current} highlight />
+              {upcoming.map((ev, i) => (
+                <EventRow key={ev.time + ev.title} event={ev} opacity={i === 0 ? 0.65 : 0.4} />
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', margin: 0 }}>일정 없음</p>
+          )}
+        </div>
       </div>
 
       <style>{`
