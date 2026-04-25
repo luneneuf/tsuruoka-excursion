@@ -47,8 +47,9 @@ export default function Timeline({ initialDay }: TimelineProps) {
     const delta = e.changedTouches[0].clientX - listTouchStartX.current
     listTouchStartX.current = null
     if (Math.abs(delta) < 60) return
+    e.stopPropagation()
     setActiveDay(d =>
-      delta < 0
+      delta > 0
         ? Math.min(d + 1, tripData.days.length - 1)
         : Math.max(d - 1, 0)
     )

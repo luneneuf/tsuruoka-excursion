@@ -54,8 +54,9 @@ export default function Home({ onGoTimeline }: HomeProps) {
     const delta = e.changedTouches[0].clientX - heroTouchStartX.current
     heroTouchStartX.current = null
     if (Math.abs(delta) < 40) return
+    e.stopPropagation()
     setHeroIdx(i =>
-      delta < 0
+      delta > 0
         ? (i + 1) % HERO_IMAGES.length
         : (i - 1 + HERO_IMAGES.length) % HERO_IMAGES.length
     )
