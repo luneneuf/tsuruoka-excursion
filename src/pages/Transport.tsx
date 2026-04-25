@@ -1,7 +1,7 @@
 import tripData from '../data/tripData'
 import TransportCard from '../components/TransportCard'
 
-const APP_VERSION = '1.6.2'
+const APP_VERSION = '1.6.3'
 
 export default function Transport() {
   return (

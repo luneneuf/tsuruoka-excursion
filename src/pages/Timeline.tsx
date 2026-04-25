@@ -50,15 +50,19 @@ export default function Timeline({ initialDay }: TimelineProps) {
     const dy = e.changedTouches[0].clientY - (listTouchStartY.current ?? 0)
     listTouchStartX.current = null
     listTouchStartY.current = null
-    // 수평 스와이프만 처리 (수직 스크롤과 구분)
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-    e.stopPropagation()
-    setActiveDay(d =>
-      dx < 0
-        ? Math.min(d + 1, tripData.days.length - 1)
-        : Math.max(d - 1, 0)
-    )
-  }, [])
+
+    if (dx < 0 && activeDay < tripData.days.length - 1) {
+      // 왼쪽 스와이프 + 다음 DAY 있음 → DAY 전환
+      e.stopPropagation()
+      setActiveDay(d => d + 1)
+    } else if (dx > 0 && activeDay > 0) {
+      // 오른쪽 스와이프 + 이전 DAY 있음 → DAY 전환
+      e.stopPropagation()
+      setActiveDay(d => d - 1)
+    }
+    // 경계에서는 App.tsx 탭 네비게이션으로 위임 (stopPropagation 없음)
+  }, [activeDay])
 
   return (
     <div
