@@ -19,6 +19,7 @@ export default function Timeline({ initialDay }: TimelineProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [timetableEvent, setTimetableEvent] = useState<Event | null>(null)
   const listTouchStartX = useRef<number | null>(null)
+  const listTouchStartY = useRef<number | null>(null)
 
   const day = tripData.days[activeDay]
 
@@ -40,23 +41,31 @@ export default function Timeline({ initialDay }: TimelineProps) {
 
   const handleListTouchStart = useCallback((e: React.TouchEvent) => {
     listTouchStartX.current = e.touches[0].clientX
+    listTouchStartY.current = e.touches[0].clientY
   }, [])
 
   const handleListTouchEnd = useCallback((e: React.TouchEvent) => {
     if (listTouchStartX.current === null) return
-    const delta = e.changedTouches[0].clientX - listTouchStartX.current
+    const dx = e.changedTouches[0].clientX - listTouchStartX.current
+    const dy = e.changedTouches[0].clientY - (listTouchStartY.current ?? 0)
     listTouchStartX.current = null
-    if (Math.abs(delta) < 60) return
+    listTouchStartY.current = null
+    // 수평 스와이프만 처리 (수직 스크롤과 구분)
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
     e.stopPropagation()
     setActiveDay(d =>
-      delta > 0
+      dx > 0
         ? Math.min(d + 1, tripData.days.length - 1)
         : Math.max(d - 1, 0)
     )
   }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+      onTouchStart={handleListTouchStart}
+      onTouchEnd={handleListTouchEnd}
+    >
       {/* Day segment control */}
       <div
         style={{
@@ -124,10 +133,7 @@ export default function Timeline({ initialDay }: TimelineProps) {
           overflowY: 'auto',
           flex: 1,
           padding: '16px 16px 100px',
-          touchAction: 'pan-y',
         }}
-        onTouchStart={handleListTouchStart}
-        onTouchEnd={handleListTouchEnd}
       >
         {day.events.map(event => (
           <EventCard key={event.id} event={event} onTap={handleTap} />

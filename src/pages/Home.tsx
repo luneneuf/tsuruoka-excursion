@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import tripData from '../data/tripData'
 import { useWeather } from '../hooks/useWeather'
 import type { Event } from '../data/tripData'
@@ -43,23 +43,9 @@ export default function Home({ onGoTimeline }: HomeProps) {
   const { today, tomorrow, source, loading, fallbackText } = useWeather()
   const { current, upcoming, dayIdx } = getCurrentEvent()
   const [heroIdx, setHeroIdx] = useState(0)
-  const heroTouchStartX = useRef<number | null>(null)
 
-  const handleHeroTouchStart = useCallback((e: React.TouchEvent) => {
-    heroTouchStartX.current = e.touches[0].clientX
-  }, [])
-
-  const handleHeroTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (heroTouchStartX.current === null) return
-    const delta = e.changedTouches[0].clientX - heroTouchStartX.current
-    heroTouchStartX.current = null
-    if (Math.abs(delta) < 40) return
-    e.stopPropagation()
-    setHeroIdx(i =>
-      delta > 0
-        ? (i + 1) % HERO_IMAGES.length
-        : (i - 1 + HERO_IMAGES.length) % HERO_IMAGES.length
-    )
+  const handleHeroTap = useCallback(() => {
+    setHeroIdx(i => (i + 1) % HERO_IMAGES.length)
   }, [])
 
   const handleScheduleTap = useCallback(() => {
@@ -71,9 +57,8 @@ export default function Home({ onGoTimeline }: HomeProps) {
 
       {/* ① 히어로 이미지 — 수동 스와이프 슬라이드쇼 */}
       <div
-        style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e', touchAction: 'pan-y' }}
-        onTouchStart={handleHeroTouchStart}
-        onTouchEnd={handleHeroTouchEnd}
+        style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e', cursor: 'pointer' }}
+        onClick={handleHeroTap}
       >
         {HERO_IMAGES.map((src, i) => (
           <img
