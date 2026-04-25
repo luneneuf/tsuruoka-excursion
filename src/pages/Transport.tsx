@@ -1,6 +1,8 @@
 import tripData from '../data/tripData'
 import TransportCard from '../components/TransportCard'
 
+const APP_VERSION = '1.6.1'
+
 export default function Transport() {
   return (
     <div style={{ padding: '0 16px 100px', overflowY: 'auto', flex: 1 }}>
@@ -76,6 +78,10 @@ export default function Transport() {
           <TipItem key={i} icon="circle" title="" text={t} />
         ))}
       </div>
+      {/* 버전 */}
+      <p style={{ fontSize: '11px', color: 'var(--color-outline)', textAlign: 'center', margin: '24px 0 0' }}>
+        v{APP_VERSION}
+      </p>
     </div>
   )
 }
