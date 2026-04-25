@@ -6,7 +6,7 @@ import type { Event } from '../data/tripData'
 const HERO_IMAGES = ['/hero1.jpg', '/hero2.jpg', '/hero3.jpg']
 const HERO_INTERVAL = 5000
 
-function getCurrentEvent(): { current: Event | null; next: Event | null; dayIdx: number } {
+function getCurrentEvent(): { current: Event | null; upcoming: Event[]; dayIdx: number } {
   const now = new Date()
   const nowDate = now.toISOString().slice(0, 10)
   const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
@@ -15,17 +15,17 @@ function getCurrentEvent(): { current: Event | null; next: Event | null; dayIdx:
 
   if (nowDate < start || nowDate > end) {
     const events = tripData.days[0].events
-    return { current: events[0], next: events[1] ?? null, dayIdx: 0 }
+    return { current: events[0], upcoming: events.slice(1, 4), dayIdx: 0 }
   }
 
   const dayIdx = tripData.days.findIndex(d => d.date === nowDate)
-  if (dayIdx < 0) return { current: tripData.days[0].events[0], next: null, dayIdx: 0 }
+  if (dayIdx < 0) return { current: tripData.days[0].events[0], upcoming: [], dayIdx: 0 }
 
   const events = tripData.days[dayIdx].events
   let idx = events.findLastIndex(e => e.time <= nowTime)
   if (idx < 0) idx = 0
 
-  return { current: events[idx] ?? null, next: events[idx + 1] ?? null, dayIdx }
+  return { current: events[idx] ?? null, upcoming: events.slice(idx + 1, idx + 4), dayIdx }
 }
 
 const TYPE_ICON: Record<Event['type'], string> = {
@@ -42,7 +42,7 @@ interface HomeProps {
 
 export default function Home({ onGoTimeline }: HomeProps) {
   const { today, tomorrow, source, loading, fallbackText } = useWeather()
-  const { current, next, dayIdx } = getCurrentEvent()
+  const { current, upcoming, dayIdx } = getCurrentEvent()
   const [heroIdx, setHeroIdx] = useState(0)
 
   useEffect(() => {
@@ -205,7 +205,9 @@ export default function Home({ onGoTimeline }: HomeProps) {
         {current ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <EventRow event={current} highlight />
-            {next && <EventRow event={next} />}
+            {upcoming.map((ev, i) => (
+              <EventRow key={ev.time + ev.title} event={ev} opacity={i === 0 ? 0.65 : 0.4} />
+            ))}
           </div>
         ) : (
           <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', margin: 0 }}>일정 없음</p>
@@ -219,9 +221,9 @@ export default function Home({ onGoTimeline }: HomeProps) {
   )
 }
 
-function EventRow({ event, highlight }: { event: Event; highlight?: boolean }) {
+function EventRow({ event, highlight, opacity }: { event: Event; highlight?: boolean; opacity?: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: highlight ? 1 : 0.65 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: highlight ? 1 : (opacity ?? 0.65) }}>
       <div
         style={{
           width: '32px',
