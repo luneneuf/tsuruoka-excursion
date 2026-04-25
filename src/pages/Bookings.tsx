@@ -177,6 +177,67 @@ export default function Bookings() {
         </p>
       </div>
 
+      {/* ─── 이키나리야 ─── */}
+      <div
+        style={{
+          background: 'var(--color-surface-container-lowest)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '14px 16px',
+          marginBottom: '10px',
+          boxShadow: 'var(--shadow-card)',
+          border: '2px dashed var(--color-outline-variant)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--color-neutral)' }}>restaurant</span>
+          <p style={{ fontFamily: 'var(--font-headline)', fontSize: '15px', fontWeight: 600, color: 'var(--color-neutral)', margin: 0 }}>
+            이키나리야
+          </p>
+          <span
+            style={{
+              marginLeft: 'auto',
+              background: 'var(--color-surface-container)',
+              color: 'var(--color-neutral)',
+              fontSize: '10px',
+              fontWeight: 600,
+              padding: '3px 8px',
+              borderRadius: 'var(--radius-full)',
+              border: '1px solid var(--color-outline-variant)',
+            }}
+          >
+            예약 미확정
+          </span>
+        </div>
+        <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', margin: '0 0 8px', lineHeight: 1.6 }}>
+          여행 전 전화 예약 필요. 수요일 휴무.
+        </p>
+        <a
+          href="tel:+81252231188"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'var(--color-surface-container)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '10px 12px',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            marginBottom: '8px',
+          }}
+        >
+          <div>
+            <p style={{ fontSize: '10px', color: 'var(--color-on-surface-variant)', margin: 0 }}>전화번호</p>
+            <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-on-surface)', margin: '2px 0 0' }}>
+              +81 25-223-1188
+            </p>
+          </div>
+          <span className="material-symbols-outlined" style={{ fontSize: '22px', color: 'var(--color-primary)' }}>call</span>
+        </a>
+        <p style={{ fontSize: '11px', color: 'var(--color-neutral)', margin: 0 }}>
+          DAY 4 (8/9 일) · 니가타 · 전통 료테이 점심
+        </p>
+      </div>
+
       <Toast message={toastMessage} visible={toastVisible} onHide={hideToast} />
     </div>
   )
