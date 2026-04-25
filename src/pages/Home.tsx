@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import tripData from '../data/tripData'
 import { useWeather } from '../hooks/useWeather'
 import type { Event } from '../data/tripData'
 
 const HERO_IMAGES = ['/hero1.jpg', '/hero2.jpg', '/hero3.jpg']
-const HERO_INTERVAL = 5000
 
 function getCurrentEvent(): { current: Event | null; upcoming: Event[]; dayIdx: number } {
   const now = new Date()
@@ -44,10 +43,22 @@ export default function Home({ onGoTimeline }: HomeProps) {
   const { today, tomorrow, source, loading, fallbackText } = useWeather()
   const { current, upcoming, dayIdx } = getCurrentEvent()
   const [heroIdx, setHeroIdx] = useState(0)
+  const heroTouchStartX = useRef<number | null>(null)
 
-  useEffect(() => {
-    const id = setInterval(() => setHeroIdx(i => (i + 1) % HERO_IMAGES.length), HERO_INTERVAL)
-    return () => clearInterval(id)
+  const handleHeroTouchStart = useCallback((e: React.TouchEvent) => {
+    heroTouchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleHeroTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (heroTouchStartX.current === null) return
+    const delta = e.changedTouches[0].clientX - heroTouchStartX.current
+    heroTouchStartX.current = null
+    if (Math.abs(delta) < 40) return
+    setHeroIdx(i =>
+      delta < 0
+        ? (i + 1) % HERO_IMAGES.length
+        : (i - 1 + HERO_IMAGES.length) % HERO_IMAGES.length
+    )
   }, [])
 
   const handleScheduleTap = useCallback(() => {
@@ -57,8 +68,12 @@ export default function Home({ onGoTimeline }: HomeProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
-      {/* ① 히어로 이미지 — 크로스페이드 슬라이드쇼 */}
-      <div style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e' }}>
+      {/* ① 히어로 이미지 — 수동 스와이프 슬라이드쇼 */}
+      <div
+        style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e' }}
+        onTouchStart={handleHeroTouchStart}
+        onTouchEnd={handleHeroTouchEnd}
+      >
         {HERO_IMAGES.map((src, i) => (
           <img
             key={src}

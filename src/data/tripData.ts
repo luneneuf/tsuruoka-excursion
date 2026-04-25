@@ -34,6 +34,19 @@ export interface EventGuide {
   tips?: string
 }
 
+export interface TimetableEntry {
+  time: string
+  note?: string
+}
+
+export interface Timetable {
+  id: string
+  label: string
+  direction: string
+  entries: TimetableEntry[]  // 빈 배열 = TODO
+  todoNote?: string          // 7월 확인 안내 문구
+}
+
 export interface Event {
   id: string
   time: string
@@ -46,6 +59,7 @@ export interface Event {
   duration?: string
   alert?: string
   guide?: EventGuide
+  timetableKey?: string  // 있으면 시간표 바텀시트
 }
 
 export interface Day {
@@ -80,6 +94,7 @@ export interface TripData {
   days: Day[]
   transport: TransportLeg[]
   tips: Tips
+  timetables: Record<string, Timetable>
 }
 
 const tripData: TripData = {
@@ -150,6 +165,7 @@ const tripData: TripData = {
           description: '도착 후 공항 1층 버스 승강장에서 탑승. 니가타역 방향.',
           cost: '¥570',
           duration: '25분',
+          timetableKey: 'airport-bus-kij-niigata',
         },
         {
           id: 'd1-inaho',
@@ -161,6 +177,7 @@ const tripData: TripData = {
           cost: '¥2,640',
           duration: '1시간 20분',
           mapQuery: 'Tsuruoka Station Yamagata',
+          timetableKey: 'inaho-niigata-tsuruoka',
         },
         {
           id: 'd1-checkin',
@@ -250,6 +267,7 @@ const tripData: TripData = {
           cost: '¥1,250',
           duration: '54분',
           alert: '버스 시간표는 여행일 기준 사전 확인 필수 (계절별 운행 편수 변동).',
+          timetableKey: 'bus-041-haguro',
         },
         {
           id: 'd2-zuishinmon',
@@ -460,6 +478,7 @@ const tripData: TripData = {
           cost: '¥2,640',
           duration: '1시간 20분',
           alert: '출발 시각은 여행 전 실제 시간표 확인 필수.',
+          timetableKey: 'inaho-tsuruoka-niigata',
         },
         {
           id: 'd4-saito',
@@ -541,6 +560,7 @@ const tripData: TripData = {
           cost: '¥570',
           duration: '25분',
           alert: '출발 2시간 전 공항 도착 목표. 18:20 공항 도착 기준으로 역산.',
+          timetableKey: 'airport-bus-niigata-kij',
         },
         {
           id: 'd4-flight',
@@ -632,6 +652,44 @@ const tripData: TripData = {
       '알 켓차노 예약 미확정 (6월 오픈 예정).',
       '이나호 특급은 좌석 지정 사전 구매 권장.',
     ],
+  },
+
+  timetables: {
+    'airport-bus-kij-niigata': {
+      id: 'airport-bus-kij-niigata',
+      label: '공항버스 KIJ → 니가타역',
+      direction: '니가타 공항 → 니가타역',
+      entries: [],
+      todoNote: '7월 중 실제 시간표 확인 후 업데이트 예정.',
+    },
+    'inaho-niigata-tsuruoka': {
+      id: 'inaho-niigata-tsuruoka',
+      label: '이나호 특급 니가타 → 쓰루오카',
+      direction: '니가타역 → 쓰루오카역',
+      entries: [],
+      todoNote: '7월 중 실제 시간표 확인 후 업데이트 예정.',
+    },
+    'bus-041-haguro': {
+      id: 'bus-041-haguro',
+      label: '쇼나이 교통 041계통',
+      direction: '쓰루오카역 → 하구로산정',
+      entries: [],
+      todoNote: '계절별 운행 편수 변동. 7월 중 시간표 확인 필요.',
+    },
+    'inaho-tsuruoka-niigata': {
+      id: 'inaho-tsuruoka-niigata',
+      label: '이나호 특급 쓰루오카 → 니가타',
+      direction: '쓰루오카역 → 니가타역',
+      entries: [],
+      todoNote: '7월 중 실제 시간표 확인 후 업데이트 예정.',
+    },
+    'airport-bus-niigata-kij': {
+      id: 'airport-bus-niigata-kij',
+      label: '공항버스 니가타역 → KIJ',
+      direction: '니가타역 → 니가타 공항',
+      entries: [],
+      todoNote: '7월 중 실제 시간표 확인 후 업데이트 예정.',
+    },
   },
 }
 

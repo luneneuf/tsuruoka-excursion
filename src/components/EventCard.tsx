@@ -33,16 +33,21 @@ export default function EventCard({ event, onTap }: EventCardProps) {
   const hasGuide = !!event.guide
   const hasMap = !!event.mapQuery
   const hasAlert = !!event.alert
+  const hasTimetable = !!event.timetableKey
 
   // Tap behavior:
-  // - guide 있음 → 바텀시트 (mapQuery는 별도 아이콘 버튼)
-  // - guide 없고 mapQuery 있음 → 지도 열기
-  // - 둘 다 없음 → 반응 없음
-  const isClickable = hasGuide || hasMap
+  // - guide 있음 → 가이드 바텀시트 (mapQuery는 별도 아이콘 버튼)
+  // - timetableKey 있음 (guide 없음) → 시간표 바텀시트
+  // - 둘 다 없고 mapQuery 있음 → 지도 열기
+  // - 모두 없음 → 반응 없음
+  const hasPrimaryAction = hasGuide || hasTimetable
+  const isClickable = hasPrimaryAction || hasMap
   const cardBg = hasGuide ? TYPE_BG[event.type] : 'var(--color-surface-container-lowest)'
 
   const handleCardClick = () => {
     if (hasGuide) {
+      onTap?.(event)
+    } else if (hasTimetable) {
       onTap?.(event)
     } else if (hasMap) {
       openMap(event.mapQuery!)
@@ -131,8 +136,14 @@ export default function EventCard({ event, onTap }: EventCardProps) {
                     info
                   </span>
                 )}
-                {/* guide + mapQuery 둘 다 있으면 지도 아이콘 별도 버튼 */}
-                {hasGuide && hasMap && (
+                {/* guide 없고 timetableKey 있으면 schedule 아이콘 */}
+                {!hasGuide && hasTimetable && (
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-primary)' }}>
+                    schedule
+                  </span>
+                )}
+                {/* primaryAction + mapQuery 둘 다 있으면 지도 아이콘 별도 버튼 */}
+                {hasPrimaryAction && hasMap && (
                   <span
                     className="material-symbols-outlined"
                     onClick={handleMapClick}
@@ -151,8 +162,8 @@ export default function EventCard({ event, onTap }: EventCardProps) {
                     map
                   </span>
                 )}
-                {/* guide 없고 mapQuery만 있으면 지도 아이콘 (카드 탭과 동일 동작) */}
-                {!hasGuide && hasMap && (
+                {/* primaryAction 없고 mapQuery만 있으면 지도 아이콘 (카드 탭과 동일 동작) */}
+                {!hasPrimaryAction && hasMap && (
                   <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-tertiary)' }}>
                     map
                   </span>
