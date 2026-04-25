@@ -70,7 +70,7 @@ export default function Home({ onGoTimeline }: HomeProps) {
 
       {/* ① 히어로 이미지 — 수동 스와이프 슬라이드쇼 */}
       <div
-        style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e' }}
+        style={{ flex: '0 0 47vh', position: 'relative', overflow: 'hidden', background: '#1b1d0e', touchAction: 'pan-y' }}
         onTouchStart={handleHeroTouchStart}
         onTouchEnd={handleHeroTouchEnd}
       >

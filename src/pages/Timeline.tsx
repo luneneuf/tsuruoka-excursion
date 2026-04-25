@@ -123,6 +123,7 @@ export default function Timeline({ initialDay }: TimelineProps) {
           overflowY: 'auto',
           flex: 1,
           padding: '16px 16px 100px',
+          touchAction: 'pan-y',
         }}
         onTouchStart={handleListTouchStart}
         onTouchEnd={handleListTouchEnd}
