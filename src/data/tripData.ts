@@ -110,8 +110,8 @@ const tripData: TripData = {
     {
       id: 'outbound',
       flightNumber: 'KE2197',
-      bookingRef: 'TODO', // TODO: 항공권 확인 후 업데이트
-      terminal: 'TODO',  // TODO: 항공권 확인 후 업데이트
+      bookingRef: 'FH8L86',
+      terminal: 'T2',
       departure: { airport: '인천국제공항', code: 'ICN', datetime: '2026-08-06T09:40' },
       arrival: { airport: '니가타 공항', code: 'KIJ', datetime: '2026-08-06T11:45' },
       seats: ['33A', '33B'],
@@ -119,8 +119,8 @@ const tripData: TripData = {
     {
       id: 'return',
       flightNumber: 'KE2198',
-      bookingRef: 'TODO', // TODO: 항공권 확인 후 업데이트
-      terminal: 'TODO',  // TODO: 항공권 확인 후 업데이트
+      bookingRef: 'FH8L86',
+      terminal: '단일터미널',
       departure: { airport: '니가타 공항', code: 'KIJ', datetime: '2026-08-09T20:20' },
       arrival: { airport: '인천국제공항', code: 'ICN', datetime: '2026-08-09T22:40' },
       seats: ['33F', '33E'],
