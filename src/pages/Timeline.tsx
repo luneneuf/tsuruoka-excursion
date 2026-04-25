@@ -54,7 +54,7 @@ export default function Timeline({ initialDay }: TimelineProps) {
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
     e.stopPropagation()
     setActiveDay(d =>
-      dx > 0
+      dx < 0
         ? Math.min(d + 1, tripData.days.length - 1)
         : Math.max(d - 1, 0)
     )
